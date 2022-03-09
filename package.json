@@ -1,0 +1,37 @@
+{
+  "name": "reikai-kouza",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:ryokohbato/reikai-kouza.git",
+  "author": "ryokohbato <ryokohbato@gmail.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "webpack",
+    "build:production": "NODE_ENV=production webpack --mode=production",
+    "fix": "eslint --fix './src/**/*.{ts,js}' && prettier --write './src/**/*.{ts,js}'",
+    "lint": "eslint './src/**/*.{ts,js}' && prettier --write './src/**/*.{ts,js}' && prettier --write './dist/secret/*.json'",
+    "prepare": "husky install"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn fix"
+    }
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/express": "^4.17.13",
+    "@typescript-eslint/parser": "^5.12.1",
+    "axios": "^0.26.0",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-import-resolver-typescript": "^2.5.0",
+    "eslint-plugin-import": "^2.25.3",
+    "express": "^4.17.3",
+    "husky": "^7.0.4",
+    "prettier": "^2.5.1",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
+  }
+}
