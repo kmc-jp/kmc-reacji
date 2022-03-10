@@ -9,7 +9,7 @@
     "build": "webpack",
     "build:production": "NODE_ENV=production webpack --mode=production",
     "fix": "eslint --fix './src/**/*.{ts,js}' && prettier --write './src/**/*.{ts,js}'",
-    "lint": "eslint './src/**/*.{ts,js}' && prettier --write './src/**/*.{ts,js}' && prettier --write './dist/secret/*.json'",
+    "lint": "eslint './src/**/*.{ts,js}' && prettier --write './src/**/*.{ts,js}'",
     "prepare": "husky install"
   },
   "husky": {
