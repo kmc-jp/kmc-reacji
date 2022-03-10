@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// eslint-disable-next-line import/no-unresolved
 import { token } from "./token";
 import { rule } from "./transfer-rule";
 
