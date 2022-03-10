@@ -131,7 +131,7 @@ app.post("/", async (request: any, response: any) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `\`#${channel_result.data.channel.name} から転送\` \`${ts_date_formatted}\`\n${message_result.data.messages[0].text}`,
+              text: `\`${channel_result.data.channel.name} から転送\` \`${ts_date_formatted}\`\n${message_result.data.messages[0].text}`,
             },
           },
         ]),
