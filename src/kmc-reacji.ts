@@ -95,7 +95,7 @@ app.post("/", async (request: any, response: any) => {
     // 転送
     // (それ以外)
     default: {
-      if (reaction !== "+1") {
+      if (reaction !== "transfer") {
         return;
       }
 
