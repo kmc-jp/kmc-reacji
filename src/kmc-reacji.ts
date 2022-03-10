@@ -69,9 +69,10 @@ app.post("/", async (request: any, response: any) => {
     .padStart(2, "0")}`;
 
   switch (requestBody.event.item.channel) {
-    // 転送先チャンネルの場合
+    // 転送取り消し
+    // (転送先チャンネルの場合)
     case rule[user]: {
-      if (reaction !== "+1") {
+      if (reaction !== "cancel-transfer") {
         return;
       }
 
@@ -91,7 +92,8 @@ app.post("/", async (request: any, response: any) => {
       break;
     }
 
-    // それ以外
+    // 転送
+    // (それ以外)
     default: {
       if (reaction !== "+1") {
         return;
