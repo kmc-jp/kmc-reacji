@@ -22,7 +22,8 @@ app.post("/", async (request: any, response: any) => {
     return;
   }
 
-  if (item_user !== user) {
+  // botの場合、item_userがundefinedになる
+  if (item_user !== user && item_user != null) {
     return;
   }
 
@@ -30,7 +31,7 @@ app.post("/", async (request: any, response: any) => {
     return;
   }
 
-  if (requestBody.event.type !== "reaction_added" && requestBody.event.type !== "reaction_removed") {
+  if (requestBody.event.type !== "reaction_added") {
     return;
   }
 
@@ -41,7 +42,7 @@ app.post("/", async (request: any, response: any) => {
 
   const message_result = await axios.get("https://slack.com/api/conversations.history", {
     headers: {
-      Authorization: `Bearer ${token.slack}`,
+      Authorization: `Bearer ${token.slack.user}`,
       "Content-Type": "application/json",
     },
     params: {
@@ -53,7 +54,7 @@ app.post("/", async (request: any, response: any) => {
 
   const channel_result = await axios.get("https://slack.com/api/conversations.info", {
     headers: {
-      Authorization: `Bearer ${token.slack}`,
+      Authorization: `Bearer ${token.slack.bot}`,
       "Content-Type": "application/json",
     },
     params: {
@@ -69,88 +70,81 @@ app.post("/", async (request: any, response: any) => {
     .toString()
     .padStart(2, "0")}`;
 
-  switch (requestBody.event.item.channel) {
-    // 転送取り消し
-    // (転送先チャンネルの場合)
-    case rule[user]: {
-      if (reaction !== "cancel-transfer") {
-        return;
-      }
-
-      await axios.post(
-        "https://slack.com/api/chat.delete",
-        {
-          channel: `${rule[user]}`,
-          ts: requestBody.event.item.ts,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token.slack}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      break;
+  // 転送取り消し
+  // (転送先チャンネルの場合)
+  if (Object.values(rule).includes(requestBody.event.item.channel)) {
+    if (reaction !== "cancel-transfer") {
+      return;
     }
 
-    // 転送
-    // (それ以外)
-    default: {
-      if (reaction !== "transfer") {
-        return;
-      }
-
-      const userinfo_result = await axios.get("https://slack.com/api/users.info", {
+    await axios.post(
+      "https://slack.com/api/chat.delete",
+      {
+        channel: `${rule[user]}`,
+        ts: requestBody.event.item.ts,
+      },
+      {
         headers: {
-          Authorization: `Bearer ${token.slack}`,
+          Authorization: `Bearer ${token.slack.bot}`,
           "Content-Type": "application/json",
         },
-        params: {
-          user: user,
-        },
-      });
-
-      if (message_result.data.ok && channel_result.data.ok && userinfo_result.data.ok) {
-        const profile = userinfo_result.data.user.profile;
-        const icon_url: string =
-          profile.image_original ??
-          profile.image_512 ??
-          profile.image_192 ??
-          profile.image_72 ??
-          profile.image_48 ??
-          profile.image_32 ??
-          profile.image_24 ??
-          "";
-        const user_name = userinfo_result.data.user.name;
-
-        await axios.post(
-          "https://slack.com/api/chat.postMessage",
-          {
-            channel: `${rule[user]}`,
-            text: `${message_result.data.messages[0].text}`,
-            blocks: JSON.stringify([
-              {
-                type: "section",
-                text: {
-                  type: "mrkdwn",
-                  text: `\`#${channel_result.data.channel.name} から転送\` \`${ts_date_formatted}\`\n${message_result.data.messages[0].text}`,
-                },
-              },
-            ]),
-            as_user: true,
-            icon_url: icon_url,
-            username: user_name,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token.slack}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
       }
-      break;
-    }
+    );
+  }
+
+  // 転送
+  // (それ以外)
+  if (reaction !== "transfer") {
+    return;
+  }
+
+  const userinfo_result = await axios.get("https://slack.com/api/users.info", {
+    headers: {
+      Authorization: `Bearer ${token.slack.bot}`,
+      "Content-Type": "application/json",
+    },
+    params: {
+      user: user,
+    },
+  });
+
+  if (message_result.data.ok && channel_result.data.ok && userinfo_result.data.ok) {
+    const profile = userinfo_result.data.user.profile;
+    const icon_url: string =
+      profile.image_original ??
+      profile.image_512 ??
+      profile.image_192 ??
+      profile.image_72 ??
+      profile.image_48 ??
+      profile.image_32 ??
+      profile.image_24 ??
+      "";
+    const user_name = userinfo_result.data.user.name;
+
+    await axios.post(
+      "https://slack.com/api/chat.postMessage",
+      {
+        channel: `${rule[user]}`,
+        text: `${message_result.data.messages[0].text}`,
+        blocks: JSON.stringify([
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `\`#${channel_result.data.channel.name} から転送\` \`${ts_date_formatted}\`\n${message_result.data.messages[0].text}`,
+            },
+          },
+        ]),
+        icon_url: icon_url,
+        username: user_name,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token.slack.bot}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 
   // Request URLの検証時に必要
