@@ -1,3 +1,6 @@
 export const token = {
-  slack: "xoxp-1234567890-1234567890123-1234567890123-foobarfoobarhogefugahogenyannyan",
+  slack: {
+    bot: "xoxb-1234567890-1234567890123-abcdefghijklmnopqrstuvwx",
+    user: "xoxp-1234567890-1234567890123-1234567890123-foobarfoobarhogefugahogenyannyan",
+  },
 } as const;
