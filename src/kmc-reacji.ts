@@ -63,9 +63,10 @@ app.post("/", async (request: any, response: any) => {
   });
 
   const ts_date = new Date(Number.parseInt(ts.split(".")[0]) * 1000);
-  const ts_date_formatted = `${ts_date.getFullYear()}/${
-    ts_date.getMonth() + 1
-  }/${ts_date.getDate()} ${ts_date.getHours()}:${ts_date.getMinutes()}:${ts_date
+  const ts_date_formatted = `${ts_date.getFullYear()}/${ts_date.getMonth() + 1}/${ts_date.getDate()} ${ts_date
+    .getHours()
+    .toString()
+    .padStart(2, "0")}:${ts_date.getMinutes().toString().padStart(2, "0")}:${ts_date
     .getSeconds()
     .toString()
     .padStart(2, "0")}`;
