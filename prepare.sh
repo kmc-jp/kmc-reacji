@@ -1,1 +1,1 @@
-docker build -t reikai-kouza .
+docker build -t kmc-reacji .

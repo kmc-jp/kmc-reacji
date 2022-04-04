@@ -1,6 +1,6 @@
 FROM node:17-alpine3.14
 RUN apk add bash
 ENTRYPOINT ["bash"]
-WORKDIR /reikai-kouza
+WORKDIR /kmc-reacji
 COPY . .
 CMD [ "./docker/production-build.sh" ]
