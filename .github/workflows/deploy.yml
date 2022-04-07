@@ -24,10 +24,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 14
+      - run: "echo $${{ secrets.TOKEN }} >> ./src/token.ts"
       - name: Install
         run: "yarn install"
       - name: Build
         run: "yarn run build:production"
 
       - name: Restart kmc-reacji
-        run: bash deploy.sh
+        run: bash deploy/deploy.sh
