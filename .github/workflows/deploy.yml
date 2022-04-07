@@ -10,6 +10,7 @@ jobs:
     steps:
     - name: Setup
       uses: actions/checkout@v2
+
     - name: Install SSH key
       uses: shimataro/ssh-key-action@v2
       with:
@@ -17,11 +18,13 @@ jobs:
         name: miyama
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
         config: ${{ secrets.CONFIG }}
+
     - name: Build
       uses: actions/setup-node@v1
         with:
           node-version: 14
-      - run: "yarn install"
-      - run: "yarn run build:production"
+      run: "yarn install"
+      run: "yarn run build:production"
+
     - name: Restart kmc-reacji
       run: bash deploy.sh
