@@ -19,11 +19,14 @@ jobs:
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
           config: ${{ secrets.CONFIG }}
 
-      - name: Build
-        uses: actions/setup-node@v1
+      - name: Build Setup
+        uses: actions/checkout@v3
+        uses: actions/setup-node@v3
         with:
           node-version: 14
+      - name: Install
         run: "yarn install"
+      - name: Build
         run: "yarn run build:production"
 
       - name: Restart kmc-reacji
