@@ -6,6 +6,7 @@ import { rule } from "./transfer-rule";
 
 const express = require("express");
 const app = express();
+const FormData = require("form-data");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -122,6 +123,55 @@ app.post("/", async (request: any, response: any) => {
       "";
     const user_name = userinfo_result.data.user.name;
 
+    let files: string[] = [];
+
+    if (message_result.data.messages[0].files != null) {
+      const results = await Promise.all(
+        message_result.data.messages[0].files
+          .filter((x: any) => /image\/.*/.test(x.mimetype))
+          .map(async (x: any) => {
+            return axios.get(x.url_private, {
+              headers: {
+                Authorization: `Bearer ${token.slack.user}`,
+              },
+              responseType: "arraybuffer",
+            });
+          })
+      );
+
+      const gyazo_result = await Promise.all(
+        results.map((x) => {
+          const form = new FormData();
+          form.append("access_token", token.gyazo);
+          form.append("imagedata", x.data, {
+            filename: `${ts}__kmc-reacji`,
+            contentType: "image/png",
+          });
+          return axios.post("https://upload.gyazo.com/api/upload", form);
+        })
+      );
+
+      files = [...files, ...gyazo_result.map((x) => x.data.url)];
+
+      await Promise.all(
+        gyazo_result.map((x) => {
+          return axios.post(
+            "https://slack.com/api/chat.postMessage",
+            {
+              channel: "C03EPCHUVS5",
+              text: x.data.permalink_url,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token.slack.bot}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        })
+      );
+    }
+
     await axios.post(
       "https://slack.com/api/chat.postMessage",
       {
@@ -142,7 +192,7 @@ app.post("/", async (request: any, response: any) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${message_result.data.messages[0].text}`,
+              text: `${message_result.data.messages[0].text}\n${files.join("\n")}`,
             },
           },
         ]),
