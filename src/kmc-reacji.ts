@@ -183,7 +183,7 @@ app.post("/", async (request: any, response: any) => {
             elements: [
               {
                 type: "plain_text",
-                text: `${target_channel_info.data.channel.name} から転送 / ${ts__date_formatted}`,
+                text: `${target_channel_info.data.channel.name} から転送    ${ts__date_formatted}`,
                 emoji: true,
               },
             ],
