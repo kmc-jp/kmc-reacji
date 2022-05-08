@@ -129,7 +129,7 @@ app.post("/", async (request: any, response: any) => {
       const results = await Promise.all(
         message_result.data.messages[0].files
           .filter((x: any) => /image\/.*/.test(x.mimetype))
-          .map(async (x: any) => {
+          .map((x: any) => {
             return axios.get(x.url_private, {
               headers: {
                 Authorization: `Bearer ${token.slack.user}`,
