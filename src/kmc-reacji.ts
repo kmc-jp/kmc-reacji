@@ -15,16 +15,16 @@ app.post("/", async (request: any, response: any) => {
   response.end();
 
   const requestBody = request.body;
-  const user = requestBody.event.user;
+  const event_user = requestBody.event.user;
   const item_user = requestBody.event.item_user;
   const reaction = requestBody.event.reaction;
 
-  if (!(user in rule)) {
+  if (!(event_user in rule)) {
     return;
   }
 
   // botの場合、item_userがundefinedになる
-  if (item_user !== user && item_user != null) {
+  if (item_user !== event_user && item_user != null) {
     return;
   }
 
@@ -36,38 +36,38 @@ app.post("/", async (request: any, response: any) => {
     return;
   }
 
-  const channel: string = requestBody.event.item.channel;
-  const ts: string = requestBody.event.item.ts;
-  const latestTs = `${ts.split(".")[0]}.${Number.parseInt(ts.split(".")[1]) + 1}`;
-  const oldestTs = `${ts.split(".")[0]}.${Number.parseInt(ts.split(".")[1]) - 1}`;
+  const target_channel: string = requestBody.event.item.channel;
+  const target_ts: string = requestBody.event.item.ts;
+  const latestTs = `${target_ts.split(".")[0]}.${Number.parseInt(target_ts.split(".")[1]) + 1}`;
+  const oldestTs = `${target_ts.split(".")[0]}.${Number.parseInt(target_ts.split(".")[1]) - 1}`;
 
-  const message_result = await axios.get("https://slack.com/api/conversations.history", {
+  const target_message = await axios.get("https://slack.com/api/conversations.history", {
     headers: {
       Authorization: `Bearer ${token.slack.user}`,
       "Content-Type": "application/json",
     },
     params: {
-      channel: channel,
+      channel: target_channel,
       latest: latestTs,
       oldest: oldestTs,
     },
   });
 
-  const channel_result = await axios.get("https://slack.com/api/conversations.info", {
+  const target_channel_info = await axios.get("https://slack.com/api/conversations.info", {
     headers: {
       Authorization: `Bearer ${token.slack.bot}`,
       "Content-Type": "application/json",
     },
     params: {
-      channel: channel,
+      channel: target_channel,
     },
   });
 
-  const ts_date = new Date(Number.parseInt(ts.split(".")[0]) * 1000);
-  const ts_date_formatted = `${ts_date.getFullYear()}/${ts_date.getMonth() + 1}/${ts_date.getDate()} ${ts_date
+  const ts__date = new Date(Number.parseInt(target_ts.split(".")[0]) * 1000);
+  const ts__date_formatted = `${ts__date.getFullYear()}/${ts__date.getMonth() + 1}/${ts__date.getDate()} ${ts__date
     .getHours()
     .toString()
-    .padStart(2, "0")}:${ts_date.getMinutes().toString().padStart(2, "0")}:${ts_date
+    .padStart(2, "0")}:${ts__date.getMinutes().toString().padStart(2, "0")}:${ts__date
     .getSeconds()
     .toString()
     .padStart(2, "0")}`;
@@ -82,7 +82,7 @@ app.post("/", async (request: any, response: any) => {
     await axios.post(
       "https://slack.com/api/chat.delete",
       {
-        channel: `${rule[user]}`,
+        channel: `${rule[event_user]}`,
         ts: requestBody.event.item.ts,
       },
       {
@@ -100,18 +100,18 @@ app.post("/", async (request: any, response: any) => {
     return;
   }
 
-  const userinfo_result = await axios.get("https://slack.com/api/users.info", {
+  const target_user_info = await axios.get("https://slack.com/api/users.info", {
     headers: {
       Authorization: `Bearer ${token.slack.bot}`,
       "Content-Type": "application/json",
     },
     params: {
-      user: user,
+      user: event_user,
     },
   });
 
-  if (message_result.data.ok && channel_result.data.ok && userinfo_result.data.ok) {
-    const profile = userinfo_result.data.user.profile;
+  if (target_message.data.ok && target_channel_info.data.ok && target_user_info.data.ok) {
+    const profile = target_user_info.data.user.profile;
     const icon_url: string =
       profile.image_original ??
       profile.image_512 ??
@@ -121,13 +121,13 @@ app.post("/", async (request: any, response: any) => {
       profile.image_32 ??
       profile.image_24 ??
       "";
-    const user_name = userinfo_result.data.user.name;
+    const user_name = target_user_info.data.user.name;
 
     let files: string[] = [];
 
-    if (message_result.data.messages[0].files != null) {
-      const results = await Promise.all(
-        message_result.data.messages[0].files
+    if (target_message.data.messages[0].files != null) {
+      const images_data = await Promise.all(
+        target_message.data.messages[0].files
           .filter((x: any) => /image\/.*/.test(x.mimetype))
           .map((x: any) => {
             return axios.get(x.url_private, {
@@ -139,22 +139,22 @@ app.post("/", async (request: any, response: any) => {
           })
       );
 
-      const gyazo_result = await Promise.all(
-        results.map((x) => {
+      const gyazo_urls = await Promise.all(
+        images_data.map((x) => {
           const form = new FormData();
           form.append("access_token", token.gyazo);
           form.append("imagedata", x.data, {
-            filename: `${ts}__kmc-reacji`,
+            filename: `${target_ts}__kmc-reacji`,
             contentType: "image/png",
           });
           return axios.post("https://upload.gyazo.com/api/upload", form);
         })
       );
 
-      files = [...files, ...gyazo_result.map((x) => x.data.url)];
+      files = [...files, ...gyazo_urls.map((x) => x.data.url)];
 
       await Promise.all(
-        gyazo_result.map((x) => {
+        gyazo_urls.map((x) => {
           return axios.post(
             "https://slack.com/api/chat.postMessage",
             {
@@ -175,15 +175,15 @@ app.post("/", async (request: any, response: any) => {
     await axios.post(
       "https://slack.com/api/chat.postMessage",
       {
-        channel: `${rule[user]}`,
-        text: `${message_result.data.messages[0].text}`,
+        channel: `${rule[event_user]}`,
+        text: `${target_message.data.messages[0].text}`,
         blocks: JSON.stringify([
           {
             type: "context",
             elements: [
               {
                 type: "plain_text",
-                text: `${channel_result.data.channel.name} から転送 / ${ts_date_formatted}`,
+                text: `${target_channel_info.data.channel.name} から転送 / ${ts__date_formatted}`,
                 emoji: true,
               },
             ],
@@ -192,7 +192,7 @@ app.post("/", async (request: any, response: any) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${message_result.data.messages[0].text}\n${files.join("\n")}`,
+              text: `${target_message.data.messages[0].text}\n${files.join("\n")}`,
             },
           },
         ]),
