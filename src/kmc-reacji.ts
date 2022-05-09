@@ -126,16 +126,21 @@ app.post("/", async (request: any, response: any) => {
     let files: string[] = [];
 
     if (target_message.data.messages[0].files != null) {
-      const images_data = await Promise.all(
+      const images_data: { data: any; mimetype: string }[] = await Promise.all(
         target_message.data.messages[0].files
           .filter((x: any) => /image\/.*/.test(x.mimetype))
-          .map((x: any) => {
-            return axios.get(x.url_private, {
-              headers: {
-                Authorization: `Bearer ${token.slack.user}`,
-              },
-              responseType: "arraybuffer",
-            });
+          .map(async (x: any) => {
+            return {
+              data: (
+                await axios.get(x.url_private, {
+                  headers: {
+                    Authorization: `Bearer ${token.slack.user}`,
+                  },
+                  responseType: "arraybuffer",
+                })
+              ).data,
+              mimetype: x.mimetype,
+            };
           })
       );
 
@@ -145,7 +150,7 @@ app.post("/", async (request: any, response: any) => {
           form.append("access_token", token.gyazo);
           form.append("imagedata", x.data, {
             filename: `${target_ts}__kmc-reacji`,
-            contentType: "image/png",
+            contentType: x.mimetype,
           });
           return axios.post("https://upload.gyazo.com/api/upload", form);
         })
